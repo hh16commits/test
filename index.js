@@ -1,6 +1,12 @@
 const TelegramBot = require('node-telegram-bot-api');
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 const token = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
 
