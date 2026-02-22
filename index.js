@@ -11,8 +11,6 @@ const db = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 5,
 });
 
 bot.onText(/\/start/, (msg) => {
@@ -21,13 +19,11 @@ bot.onText(/\/start/, (msg) => {
 
 async function checkOrders() {
   try {
-
     const [orders] = await db.query(
       "SELECT * FROM orders WHERE sent = 0"
     );
 
     for (const order of orders) {
-
       const text =
         "🛒 Новый заказ\n\n" +
         order.products +
@@ -40,10 +36,20 @@ async function checkOrders() {
         [order.id]
       );
     }
-
   } catch (error) {
     console.log("Ошибка:", error.message);
   }
 }
 
+async function testDB() {
+  try {
+    const [rows] = await db.query("SELECT * FROM orders");
+    console.log("БД подключена ✅");
+    console.log(rows);
+  } catch (err) {
+    console.log("Ошибка БД ❌:", err.message);
+  }
+}
+
+testDB();
 setInterval(checkOrders, 5000);
