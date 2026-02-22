@@ -13,6 +13,22 @@ const db = new Pool({
   }
 });
 
+async function initDB() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id SERIAL PRIMARY KEY,
+        products TEXT,
+        total INTEGER,
+        sent INTEGER DEFAULT 0
+      );
+    `);
+    console.log("Таблица orders готова ✅");
+  } catch (err) {
+    console.log("Ошибка создания таблицы:", err.message);
+  }
+}
+
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, "Glowrush bot запущен ✅");
 });
@@ -44,4 +60,9 @@ async function checkOrders() {
   }
 }
 
-setInterval(checkOrders, 5000);
+async function start() {
+  await initDB();
+  setInterval(checkOrders, 5000);
+}
+
+start();
