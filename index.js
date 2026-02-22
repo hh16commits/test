@@ -1,22 +1,16 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { Pool } = require('pg');
 
-const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
 const token = process.env.BOT_TOKEN;
 const chatId = process.env.CHAT_ID;
 
 const bot = new TelegramBot(token, { polling: true });
 
-const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+const db = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 bot.onText(/\/start/, (msg) => {
@@ -25,9 +19,11 @@ bot.onText(/\/start/, (msg) => {
 
 async function checkOrders() {
   try {
-    const [orders] = await db.query(
+    const result = await db.query(
       "SELECT * FROM orders WHERE sent = 0"
     );
+
+    const orders = result.rows;
 
     for (const order of orders) {
       const text =
@@ -38,24 +34,14 @@ async function checkOrders() {
       await bot.sendMessage(chatId, text);
 
       await db.query(
-        "UPDATE orders SET sent = 1 WHERE id = ?",
+        "UPDATE orders SET sent = 1 WHERE id = $1",
         [order.id]
       );
     }
+
   } catch (error) {
     console.log("Ошибка:", error.message);
   }
 }
 
-async function testDB() {
-  try {
-    const [rows] = await db.query("SELECT * FROM orders");
-    console.log("БД подключена ✅");
-    console.log(rows);
-  } catch (err) {
-    console.log("Ошибка БД ❌:", err.message);
-  }
-}
-
-testDB();
 setInterval(checkOrders, 5000);
